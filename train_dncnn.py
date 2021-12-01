@@ -11,9 +11,11 @@ import argparse
 import wandb
 from torch.optim import Adam
 from torch.utils.data import DataLoader
+from torchvision import transforms as T
 
 from dncnn.dncnn import DnCNN
 from dncnn.loader import NoisyDataset
+from dncnn.utils import AWGN
 
 # arguments parsing
 
@@ -25,6 +27,17 @@ parser.add_argument('--output_file_name', type=str, default = "DnCNN", help='out
 parser.add_argument('--wandb-name', type=str, default='dncnn', help='name of wandb run')
 
 args = parser.parse_args()
+
+# helper functions
+
+def create_img_transform(image_width, std_value):
+    transform = T.Compose([
+                    T.CenterCrop((image_width, image_width)),
+                    T.ToTensor(),
+                    AddGaussianNoise(0., std_value)
+            ])
+    return transform
+
 
 # constants
 
