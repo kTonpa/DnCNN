@@ -45,13 +45,14 @@ class NoisyDataset(Dataset):
         img_path = self.noisy_images[idx]
 
         try:
-            img = Image.open(img_path).convert('RGB')
+            img = Image.open(img_path).convert('L')
             img = np.array(img)
             img = img.astype(np.float32) / 255.0
             img = torch.from_numpy(img)
 
             if self.transform:
                 img = self.transform(img)
+                
         except UnidentifiedImageError as corrupt_image_exceptions:
             print(f"An exception occurred trying to load file {img_path}.")
             print(f"Skipping index {idx}.")
