@@ -52,7 +52,7 @@ class NoisyDataset(Dataset):
 
             if self.transform:
                 img = self.transform(img)
-                
+
         except UnidentifiedImageError as corrupt_image_exceptions:
             print(f"An exception occurred trying to load file {img_path}.")
             print(f"Skipping index {idx}.")
@@ -61,4 +61,3 @@ class NoisyDataset(Dataset):
         # success
         
         return img
-
