@@ -9,6 +9,20 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+
+# helper functions
+
+def eval_decorator(fn):
+    def inner(model, *args, **kwargs):
+        was_training = model.training
+        model.eval()
+        out = fn(model, *args, **kwargs)
+        model.train(was_training)
+        return out
+    return inner
+
+# main classe
+
 class DnCNN(nn.Module):
     def __init__(
         self,
@@ -34,10 +48,19 @@ class DnCNN(nn.Module):
         
         self.dncnn = nn.Sequential(*layers)
 
-    def forward(self, y, x, return_loss = False):
+
+    @torch.no_grad()
+    @eval_decorator
+    def denoise(self, y):
+        return self(y)
+
+
+    def forward(self, y, return_loss=False, x=None):
         n = self.dncnn(y)
 
-        if return_loss:
-            return n - (y-x)
+        if not return_loss:
+            return y-n
         
-        return y-n
+        # calculate the L2 loss
+
+        return F.mse_loss(n, y-x)
