@@ -17,16 +17,21 @@ import torch
 from torch.utils.data import Dataset
 
 class NoisyDataset(Dataset):
-    def __init__(self, root_dir, transform=None, shuffle=False):
+    def __init__(self, root_dir, std, mean, transform=None, shuffle=False):
         super(NoisyDataset, self).__init__()
         root = Path(root_dir)
+        self.std = std
+        self.mean = mean
         self.transform = transform
         self.shuffle = shuffle
 
-        self.noisy_images = list(*root.glob('*.png'))
+        self.images_files = [
+            *root.glob('*.png'), *root.glob('*.jpg'),
+            *root.glob('*.jpeg'), *root.glob('*.bmp')
+        ]
 
     def __len__(self):
-        return len(self.noisy_images)
+        return len(self.images_files)
 
     def random_sample(self):
         return self.__getitem__(randint(0, self.__len__() - 1))
@@ -42,16 +47,22 @@ class NoisyDataset(Dataset):
         return self.sequential_sample(ind=ind)
 
     def __getitem__(self, idx):
-        img_path = self.noisy_images[idx]
+        img_path = self.images_files[idx]
 
         try:
             img = Image.open(img_path).convert('L')
             img = np.array(img)
-            img = img.astype(np.float32) / 255.0
             img = torch.from_numpy(img)
+            img = torch.unsqueeze(img, dim=0)
+            img = img.float()
 
             if self.transform:
                 img = self.transform(img)
+
+            img_y = img + self.std * torch.randn(img.shape) + self.mean
+
+            img = img / 255.
+            img_y = img_y / 255.
 
         except UnidentifiedImageError as corrupt_image_exceptions:
             print(f"An exception occurred trying to load file {img_path}.")
@@ -60,4 +71,4 @@ class NoisyDataset(Dataset):
 
         # success
         
-        return img
+        return img, img_y
